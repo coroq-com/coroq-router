@@ -4,6 +4,14 @@ namespace Coroq\Router;
 
 use InvalidArgumentException;
 
+/**
+ * A minimal router that maps URL paths to handlers using a recursive array structure.
+ *
+ * Route maps use a simple convention:
+ * - Items with numeric keys are always included in results (useful for middleware)
+ * - Items with string keys are matched against path segments
+ * - Empty string keys ('') match empty path segments
+ */
 class Router {
   private array $map;
 
@@ -17,7 +25,17 @@ class Router {
     $this->map = $map;
   }
 
-  public function route(array $waypoints): array {
+  /**
+   * Find handlers for a given path
+   *
+   * @param string $path URL path like "/users/profile"
+   * @return array List of handlers matching the path
+   */
+  public function route(string $path): array {
+    // Convert path to waypoints
+    $path = trim($path, '/');
+    $waypoints = $path === '' ? [''] : explode('/', $path);
+    
     try {
       return $this->routeWithMap($this->map, $waypoints);
     }

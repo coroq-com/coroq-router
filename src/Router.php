@@ -30,18 +30,14 @@ class Router {
    *
    * @param string $path URL path like "/users/profile"
    * @return array List of handlers matching the path
+   * @throws RouteNotFoundException When no route matches the path
    */
   public function route(string $path): array {
     // Convert path to waypoints
     $path = trim($path, '/');
     $waypoints = $path === '' ? [''] : explode('/', $path);
     
-    try {
-      return $this->routeWithMap($this->map, $waypoints);
-    }
-    catch (RouteNotFoundException) {
-      return [];
-    }
+    return $this->routeWithMap($this->map, $waypoints);
   }
   
   private function routeWithMap(array $map, array $waypoints): array {

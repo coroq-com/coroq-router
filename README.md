@@ -46,7 +46,13 @@ $router = new Router($routeMap);
 $handlers = $router->route('/');  // Returns [Auth::class, App\Controller\HomeController::class]
 $handlers = $router->route('/users');  // Returns [Auth::class, ListController::class]
 $handlers = $router->route('/users/detail');  // Returns [Auth::class, ListController::class, DetailController::class]
-$handlers = $router->route('/nope');  // Returns [] (empty array)
+
+// Non-existent routes throw RouteNotFoundException
+try {
+    $handlers = $router->route('/nope');
+} catch (Coroq\Router\RouteNotFoundException $e) {
+    // Handle route not found
+}
 
 // Leading and trailing slashes are handled automatically
 $handlers = $router->route('/users/detail/');  // Same as '/users/detail'
@@ -66,7 +72,7 @@ This router is for you if:
 
 - PHP 8.0+ required
 - Empty string keys (`''`) match empty path segments
-- Non-existent routes return an empty array
+- Non-existent routes throw RouteNotFoundException
 - No regex, no named parameters, just simple path segment matching
 - Can be used with PSR-15 middleware by processing the returned handlers
 

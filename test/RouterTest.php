@@ -18,8 +18,9 @@ class RouterTest extends TestCase {
     // Successful route with string value
     $this->assertSame(['p1', 'p2', 'p3'], $router->route('/a'));
     
-    // Non-existent route
-    $this->assertSame([], $router->route('/b'));
+    // Non-existent route should throw RouteNotFoundException
+    $this->expectException(\Coroq\Router\RouteNotFoundException::class);
+    $router->route('/b');
   }
 
   /**
@@ -37,9 +38,24 @@ class RouterTest extends TestCase {
     
     // Successful nested route
     $this->assertSame(['p1', 'p2', 'p3', 'p4'], $router->route('/a/b'));
+  }
+  
+  /**
+   * Test that non-existent nested waypoint throws exception
+   */
+  public function testNonExistentNestedWaypoint(): void {
+    $router = new Router([
+      'p1',
+      'p2',
+      'a' => [
+        'p3',
+        'b' => 'p4',
+      ],
+    ]);
     
-    // Non-existent nested waypoint
-    $this->assertSame([], $router->route('/a/c'));
+    // Non-existent nested waypoint should throw RouteNotFoundException
+    $this->expectException(\Coroq\Router\RouteNotFoundException::class);
+    $router->route('/a/c');
   }
 
   /**
@@ -81,7 +97,8 @@ class RouterTest extends TestCase {
    */
   public function testEmptyMap(): void {
     $emptyRouter = new Router([]);
-    $this->assertSame([], $emptyRouter->route('/a'));
+    $this->expectException(\Coroq\Router\RouteNotFoundException::class);
+    $emptyRouter->route('/a');
   }
   
   /**

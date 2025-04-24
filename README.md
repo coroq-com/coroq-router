@@ -16,7 +16,7 @@ Maps URL paths to handlers using nested arrays with a simple convention:
 
 ```php
 <?php
-use Coroq\Router\Router;
+use Coroq\Router\MapRouter;
 use App\Middleware\Auth;
 use App\Controller\User\ListController;
 use App\Controller\User\DetailController;
@@ -40,22 +40,38 @@ $routeMap = [
 ];
 
 // Create router
-$router = new Router($routeMap);
+$router = new MapRouter($routeMap);
 
 // Get handlers for a path
-$handlers = $router->route('/');  // Returns [Auth::class, App\Controller\HomeController::class]
-$handlers = $router->route('/users');  // Returns [Auth::class, ListController::class]
-$handlers = $router->route('/users/detail');  // Returns [Auth::class, ListController::class, DetailController::class]
+$handlers = $router->routePath('/');  // Returns [Auth::class, App\Controller\HomeController::class]
+$handlers = $router->routePath('/users');  // Returns [Auth::class, ListController::class]
+$handlers = $router->routePath('/users/detail');  // Returns [Auth::class, ListController::class, DetailController::class]
 
 // Non-existent routes throw RouteNotFoundException
 try {
-    $handlers = $router->route('/nope');
+    $handlers = $router->routePath('/nope');
 } catch (Coroq\Router\RouteNotFoundException $e) {
     // Handle route not found
 }
 
 // Leading and trailing slashes are handled automatically
-$handlers = $router->route('/users/detail/');  // Same as '/users/detail'
+$handlers = $router->routePath('/users/detail/');  // Same as '/users/detail'
+
+// Using CatchAllRouter for fallback handlers
+use Coroq\Router\CatchAllRouter;
+
+$catchAll = new CatchAllRouter('App\Controller\NotFoundController');
+$routeMap = [
+    'users' => [
+        // Normal route handling
+        'profile' => 'App\Controller\ProfileController',
+    ],
+    // This will catch any other routes that don't match
+    $catchAll,
+];
+
+$router = new MapRouter($routeMap);
+$handlers = $router->routePath('/unknown/path');  // Returns ['App\Controller\NotFoundController']
 ```
 
 ## Why use this?
@@ -66,13 +82,14 @@ This router is for you if:
 - You want a visual representation of your route hierarchy
 - You prefer array-based configuration over annotations/attributes
 - You're building a small application or API
-- You value code simplicity (entire implementation is under 60 lines)
+- You value code simplicity and composability
 
 ## Notes
 
 - PHP 8.0+ required
 - Empty string keys (`''`) match empty path segments
 - Non-existent routes throw RouteNotFoundException
+- CatchAllRouter provides a simple way to handle fallback routes
 - No regex, no named parameters, just simple path segment matching
 - Can be used with PSR-15 middleware by processing the returned handlers
 

@@ -238,4 +238,69 @@ class MapRouterTest extends TestCase {
     // since RouterInterface delegation takes precedence
     $this->assertSame(['middleware1', 'delegate-result'], $router->routePath('/a/b'));
   }
+
+  private function createSkippingRouter(): \Coroq\Router\RouterInterface {
+    $mock = $this->createMock(\Coroq\Router\RouterInterface::class);
+    $mock->method('route')->will($this->throwException(new \Coroq\Router\RouteSkipException()));
+    return $mock;
+  }
+
+  public function testRouteSkipping(): void {
+    $skippingRouter = $this->createSkippingRouter();
+    
+    $router = new MapRouter([
+      'a' => [
+        $skippingRouter,
+        '' => 'result',
+      ],
+    ]);
+    
+    $this->assertSame(['result'], $router->routePath('/a'));
+  }
+
+  public function testAllRoutesSkipped(): void {
+    $skippingRouter1 = $this->createSkippingRouter();
+    $skippingRouter2 = $this->createSkippingRouter();
+    
+    $router = new MapRouter([
+      'a' => [
+        $skippingRouter1,
+        $skippingRouter2,
+      ],
+    ]);
+    
+    $this->expectException(\Coroq\Router\RouteNotFoundException::class);
+    $router->routePath('/a');
+  }
+
+  public function testNestedRouteSkipping(): void {
+    $skippingRouter = $this->createSkippingRouter();
+    
+    $router = new MapRouter([
+      'm1',
+      'a' => [
+        'inner1',
+        'b' => [
+          $skippingRouter,
+          '' => 'result-after-skip',
+        ],
+        'c' => 'alternative-route',
+      ],
+    ]);
+    
+    $this->assertSame(['m1', 'inner1', 'result-after-skip'], $router->routePath('/a/b'));
+  }
+
+  public function testNumericKeySkipping(): void {
+    $skippingRouter = $this->createSkippingRouter();
+    
+    $router = new MapRouter([
+      'm1',
+      $skippingRouter,
+      'm2',
+      'a' => 'endpoint',
+    ]);
+    
+    $this->assertSame(['m1', 'm2', 'endpoint'], $router->routePath('/a'));
+  }
 }

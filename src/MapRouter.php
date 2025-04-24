@@ -41,29 +41,34 @@ class MapRouter implements RouterInterface {
     }
 
     foreach ($map as $key => $value) {
-      if (is_int($key)) {
-        if ($value instanceof RouterInterface) {
-          return array_merge($route, $value->route($waypoints));
+      try {
+        if (is_int($key)) {
+          if ($value instanceof RouterInterface) {
+            return array_merge($route, $value->route($waypoints));
+          }
+          $route[] = $value;
+          continue;
         }
-        $route[] = $value;
-        continue;
+
+        assert(is_string($key));
+
+        if ($key == $waypoint) {
+          if ($value instanceof RouterInterface) {
+            return array_merge($route, $value->route(array_slice($waypoints, 1)));
+          }
+
+          if (is_array($value)) {
+            return array_merge($route, $this->routeWithMap($value, array_slice($waypoints, 1)));
+          }
+
+          $route[] = $value;
+          if (count($waypoints) <= 1) {
+            return $route;
+          }
+        }
       }
-
-      assert(is_string($key));
-
-      if ($key == $waypoint) {
-        if ($value instanceof RouterInterface) {
-          return array_merge($route, $value->route(array_slice($waypoints, 1)));
-        }
-
-        if (is_array($value)) {
-          return array_merge($route, $this->routeWithMap($value, array_slice($waypoints, 1)));
-        }
-
-        $route[] = $value;
-        if (count($waypoints) <= 1) {
-          return $route;
-        }
+      catch (RouteSkipException) {
+        continue;
       }
     }
     throw new RouteNotFoundException();

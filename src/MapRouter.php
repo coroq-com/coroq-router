@@ -5,14 +5,17 @@ namespace Coroq\Router;
 use InvalidArgumentException;
 
 /**
- * A minimal router that maps URL paths to handlers using a recursive array structure.
+ * Array-based router that maps waypoints to handlers using a recursive structure
  *
  * Route maps use a simple convention:
  * - Items with numeric keys are always included in results (useful for middleware)
- * - Items with string keys are matched against path segments
- * - Empty string keys ('') match empty path segments
+ * - Items with string keys are matched against waypoints
+ * - Empty string keys ('') match empty waypoints
+ * - RouterInterface instances are delegated to for further processing
  */
-class Router {
+class MapRouter implements RouterInterface {
+  use PathRouting;
+
   private array $map;
 
   public function __construct(
@@ -25,31 +28,23 @@ class Router {
     $this->map = $map;
   }
 
-  /**
-   * Find handlers for a given path
-   *
-   * @param string $path URL path like "/users/profile"
-   * @return array List of handlers matching the path
-   * @throws RouteNotFoundException When no route matches the path
-   */
-  public function route(string $path): array {
-    // Convert path to waypoints
-    $path = trim($path, '/');
-    $waypoints = $path === '' ? [''] : explode('/', $path);
-    
+  public function route(array $waypoints): array {
     return $this->routeWithMap($this->map, $waypoints);
   }
-  
+
   private function routeWithMap(array $map, array $waypoints): array {
     $route = [];
+    $waypoint = $waypoints[0] ?? '';
 
-    $waypoint = array_shift($waypoints) ?? '';
     if (!is_string($waypoint)) {
       throw new InvalidArgumentException();
     }
 
     foreach ($map as $key => $value) {
       if (is_int($key)) {
+        if ($value instanceof RouterInterface) {
+          return array_merge($route, $value->route($waypoints));
+        }
         $route[] = $value;
         continue;
       }
@@ -57,12 +52,16 @@ class Router {
       assert(is_string($key));
 
       if ($key == $waypoint) {
+        if ($value instanceof RouterInterface) {
+          return array_merge($route, $value->route(array_slice($waypoints, 1)));
+        }
+
         if (is_array($value)) {
-          return array_merge($route, $this->routeWithMap($value, $waypoints));
+          return array_merge($route, $this->routeWithMap($value, array_slice($waypoints, 1)));
         }
 
         $route[] = $value;
-        if (!$waypoints) {
+        if (count($waypoints) <= 1) {
           return $route;
         }
       }

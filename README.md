@@ -17,25 +17,27 @@ Maps URL paths to handlers using nested arrays with a simple convention:
 ```php
 <?php
 use Coroq\Router\MapRouter;
-use App\Middleware\Auth;
-use App\Controller\User\ListController;
-use App\Controller\User\DetailController;
+use App\Middleware;
+use App\Controller;
 
 // Define a route map
 $routeMap = [
     // Numeric keys always get included in results
-    Auth::class,
-    
+    Middleware\Auth::class,
+
     // Empty string key matches root path
-    '' => App\Controller\HomeController::class,
-    
+    '' => Controller\HomeController::class,
+
     // String keys map to path segments
     'users' => [
         // Nested numeric keys also get included
-        ListController::class,
-        
+        Middleware\UserMiddleware::class,
+
+        // Empty string key matches /users
+        '' => Controller\User\ListController::class,
+
         // Nested paths
-        'detail' => DetailController::class,
+        'detail' => Controller\User\DetailController::class,
     ],
 ];
 
@@ -43,9 +45,14 @@ $routeMap = [
 $router = new MapRouter($routeMap);
 
 // Get handlers for a path
-$handlers = $router->routePath('/');  // Returns [Auth::class, App\Controller\HomeController::class]
-$handlers = $router->routePath('/users');  // Returns [Auth::class, ListController::class]
-$handlers = $router->routePath('/users/detail');  // Returns [Auth::class, ListController::class, DetailController::class]
+$handlers = $router->routePath('/');
+// Returns [Middleware\Auth::class, Controller\HomeController::class]
+
+$handlers = $router->routePath('/users');
+// Returns [Middleware\Auth::class, Middleware\UserMiddleware::class, Controller\User\ListController::class]
+
+$handlers = $router->routePath('/users/detail');
+// Returns [Middleware\Auth::class, Middleware\UserMiddleware::class, Controller\User\DetailController::class]
 
 // Non-existent routes throw RouteNotFoundException
 try {

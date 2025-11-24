@@ -293,14 +293,35 @@ class MapRouterTest extends TestCase {
 
   public function testNumericKeySkipping(): void {
     $skippingRouter = $this->createSkippingRouter();
-    
+
     $router = new MapRouter([
       'm1',
       $skippingRouter,
       'm2',
       'a' => 'endpoint',
     ]);
-    
+
     $this->assertSame(['m1', 'm2', 'endpoint'], $router->routePath('/a'));
+  }
+
+  public function testNonStringWaypointThrowsException(): void {
+    $router = new MapRouter([
+      'a' => 'handler',
+    ]);
+
+    $this->expectException(\InvalidArgumentException::class);
+    $router->route([123]);
+  }
+
+  public function testStringKeyRouterInterfaceDelegation(): void {
+    $mockRouter = $this->createMockRouter(['delegated-result']);
+
+    $router = new MapRouter([
+      'middleware',
+      'a' => $mockRouter,
+    ]);
+
+    // RouterInterface at string key should delegate with remaining waypoints
+    $this->assertSame(['middleware', 'delegated-result'], $router->routePath('/a/b/c'));
   }
 }

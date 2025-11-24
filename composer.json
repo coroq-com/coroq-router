@@ -1,6 +1,9 @@
 {
     "name": "coroq/router",
+    "description": "A minimal PHP router for mapping request paths to class names",
     "type": "library",
+    "license": "MIT",
+    "keywords": ["router", "routing", "middleware", "psr-15"],
     "require": {
         "php": "^8.0"
     },

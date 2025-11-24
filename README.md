@@ -2,17 +2,17 @@
 
 A minimal PHP router for mapping request paths to class names.
 
+## Requirements
+
+- PHP 8.0+
+
 ## Installation
 
 ```bash
 composer require coroq/router
 ```
 
-## What it does
-
-Maps URL paths to handlers using nested arrays with a simple convention:
-- Numeric keys are always included in results (useful for middleware)
-- String keys are matched against path segments
+## Quick Start
 
 ```php
 <?php
@@ -63,35 +63,46 @@ try {
 
 // Leading and trailing slashes are handled automatically
 $handlers = $router->routePath('/users/detail/');  // Same as '/users/detail'
+```
 
-// Using CatchAllRouter for fallback handlers
+## Concepts
+
+The route map is a nested array structure:
+
+- **Numeric keys** - Always included in results (middleware, shared handlers)
+- **String keys** - Matched against path segments
+- **Empty string key (`''`)** - Matches the current path level (e.g., `/` at root, `/users` inside `'users'` array)
+- **Nested arrays** - Represent path hierarchy
+
+The router returns an array of all matched handlers in order, from root to leaf.
+
+## Fallback Routes
+
+Use `CatchAllRouter` to handle any routes that don't match. Place it as a numeric-keyed item - it will be tried when no string keys match:
+
+```php
 use Coroq\Router\CatchAllRouter;
 
-$catchAll = new CatchAllRouter('App\Controller\NotFoundController');
 $routeMap = [
+    Middleware\Auth::class,
+    '' => Controller\HomeController::class,
     'users' => [
-        // Normal route handling
-        'profile' => 'App\Controller\ProfileController',
+        '' => Controller\User\ListController::class,
     ],
-    // This will catch any other routes that don't match
-    $catchAll,
+    // Catches any unmatched routes
+    new CatchAllRouter(Controller\NotFoundController::class),
 ];
 
 $router = new MapRouter($routeMap);
-$handlers = $router->routePath('/unknown/path');  // Returns ['App\Controller\NotFoundController']
+$handlers = $router->routePath('/unknown/path');
+// Returns [Middleware\Auth::class, Controller\NotFoundController::class]
 ```
 
 ## Path Rewriting
 
-You can use PathRewriter to extract parameters from URLs and convert them to normalized paths before routing.
+MapRouter matches path segments exactly as strings. When you need dynamic segments like `/user/123` or `/post/hello-world`, use `PathRewriter` to extract parameters first, then route the normalized path.
 
 ```php
-<?php
-use Coroq\Router\MapRouter;
-use Coroq\Router\PathRewrite\PathRewriter;
-use App\Controller;
-
-// Set up rewriter with placeholder rules
 $rewriter = new PathRewriter();
 $rewriter->addRules([
     '/post/{postName}',
@@ -111,7 +122,9 @@ $routeMap = [
 
 $router = new MapRouter($routeMap);
 $handlers = $router->routePath($result->path);
-// Caller has both $handlers and $result->params
+
+// Pass params to your controller however you like
+// e.g., $controller->handle($request->withAttribute('params', $result->params));
 ```
 
 ### Placeholder Types
@@ -129,6 +142,7 @@ Use type constraints to restrict what a placeholder matches:
 | `uuid` | UUID format | `550e8400-e29b-41d4-a716-446655440000` |
 
 ```php
+$rewriter = new PathRewriter();
 $rewriter->addRules([
     '/token/{value:hex}',           // matches /token/5f3a, not /token/xyz
     '/item/{id:uuid}',              // matches valid UUIDs only
@@ -141,6 +155,7 @@ $rewriter->addRules([
 Placeholders can appear multiple times in a path, or even within a single segment:
 
 ```php
+$rewriter = new PathRewriter();
 $rewriter->addRule('/user/{userid:int}/post/{postid:int}');
 // /user/42/post/99 → path: /user/userid/post/postid
 //                    params: ['userid' => '42', 'postid' => '99']
@@ -156,19 +171,28 @@ $rewriter->addRule('/archive/{year:int}-{month:int}-{day:int}');
 
 ### Rule Matching Order
 
-Rules are applied sequentially. Each rule matches path components from the beginning; remaining components are preserved as suffix. Params accumulate across all matching rules:
+Rules are applied sequentially. Each rule matches from the beginning of the path; remaining segments are preserved:
 
 ```php
+$rewriter = new PathRewriter();
+$rewriter->addRule('/user/{userid:int}');
+
+// /user/123/posts → path: /user/userid/posts, params: [userid => 123]
+// The '/posts' suffix is preserved for further routing
+```
+
+Multiple rules can work together, with params accumulating:
+
+```php
+$rewriter = new PathRewriter();
 $rewriter->addRules([
     '/user/{userid:int}',
     '/user/userid/{action:alpha}',
 ]);
 
 // /user/6755/edit
-// → first rule matches '/user/6755', rewrites to '/user/userid', suffix '/edit' preserved
-//   path: /user/userid/edit, params: [userid => 6755]
-// → second rule matches '/user/userid/edit'
-//   path: /user/userid/action, params: [userid => 6755, action => edit]
+// → first rule: path becomes /user/userid/edit, params: [userid => 6755]
+// → second rule: path becomes /user/userid/action, params: [userid => 6755, action => edit]
 ```
 
 ### Custom Rules
@@ -194,24 +218,20 @@ class RegexRule implements PathRewriteRuleInterface {
 $rewriter->addRule(new RegexRule());
 ```
 
-## Why use this?
+## PSR-15 Middleware Integration
 
-This router is for you if:
+The returned handler array can be used with PSR-15 middleware pipelines:
 
-- You need a simple way to map URL paths to class names
-- You want a visual representation of your route hierarchy
-- You prefer array-based configuration over annotations/attributes
-- You're building a small application or API
-- You value code simplicity and composability
+```php
+$result = $rewriter->rewrite($request->getUri()->getPath());
+$handlers = $router->routePath($result->path);
+// $handlers = [App\Middleware\Auth::class, App\Controller\User\ShowController::class]
 
-## Notes
+// Build a middleware pipeline from $handlers
+// Middleware passes to next; leaf controller returns response
+```
 
-- PHP 8.0+ required
-- Empty string keys (`''`) match empty path segments
-- Non-existent routes throw RouteNotFoundException
-- CatchAllRouter provides a simple way to handle fallback routes
-- PathRewriter provides parameter extraction with type constraints
-- Can be used with PSR-15 middleware by processing the returned handlers
+Each leaf controller handles one route - no internal action dispatching.
 
 ## License
 

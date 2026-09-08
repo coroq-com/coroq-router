@@ -10,20 +10,20 @@ class PathRewriterTest extends TestCase {
     $rewriter = new PathRewriter();
     $rewriter->addRule('/user/{id:int}');
 
-    $result = $rewriter->rewrite(['user', '123']);
+    [$segments, $params] = $rewriter->rewrite(['user', '123']);
 
-    $this->assertSame(['user', 'id'], $result->segments);
-    $this->assertSame(['id' => '123'], $result->params);
+    $this->assertSame(['user', 'id'], $segments);
+    $this->assertSame(['id' => '123'], $params);
   }
 
   public function testRewriteWithRuleObject(): void {
     $rewriter = new PathRewriter();
     $rewriter->addRule(new PlaceholderRule('/user/{id:int}'));
 
-    $result = $rewriter->rewrite(['user', '123']);
+    [$segments, $params] = $rewriter->rewrite(['user', '123']);
 
-    $this->assertSame(['user', 'id'], $result->segments);
-    $this->assertSame(['id' => '123'], $result->params);
+    $this->assertSame(['user', 'id'], $segments);
+    $this->assertSame(['id' => '123'], $params);
   }
 
   public function testAddRules(): void {
@@ -33,11 +33,11 @@ class PathRewriterTest extends TestCase {
       '/post/{slug}',
     ]);
 
-    $result = $rewriter->rewrite(['user', '123']);
-    $this->assertSame(['user', 'id'], $result->segments);
+    [$segments] = $rewriter->rewrite(['user', '123']);
+    $this->assertSame(['user', 'id'], $segments);
 
-    $result = $rewriter->rewrite(['post', 'hello-world']);
-    $this->assertSame(['post', 'slug'], $result->segments);
+    [$segments] = $rewriter->rewrite(['post', 'hello-world']);
+    $this->assertSame(['post', 'slug'], $segments);
   }
 
   public function testSequentialRulesApply(): void {
@@ -49,9 +49,9 @@ class PathRewriterTest extends TestCase {
 
     // First rule: /user/6755/edit -> /user/userid/edit, params: [userid=>6755]
     // Second rule: /user/userid/edit -> /user/userid/action, params: [action=>edit]
-    $result = $rewriter->rewrite(['user', '6755', 'edit']);
-    $this->assertSame(['user', 'userid', 'action'], $result->segments);
-    $this->assertSame(['userid' => '6755', 'action' => 'edit'], $result->params);
+    [$segments, $params] = $rewriter->rewrite(['user', '6755', 'edit']);
+    $this->assertSame(['user', 'userid', 'action'], $segments);
+    $this->assertSame(['userid' => '6755', 'action' => 'edit'], $params);
   }
 
   public function testDuplicateParamAcrossRulesThrowsException(): void {
@@ -75,37 +75,37 @@ class PathRewriterTest extends TestCase {
       '/post/{slug}',
     ]);
 
-    $result = $rewriter->rewrite(['user', '123']);
-    $this->assertSame(['user', 'id'], $result->segments);
-    $this->assertSame(['id' => '123'], $result->params);
+    [$segments, $params] = $rewriter->rewrite(['user', '123']);
+    $this->assertSame(['user', 'id'], $segments);
+    $this->assertSame(['id' => '123'], $params);
   }
 
   public function testNoMatchReturnsOriginalPath(): void {
     $rewriter = new PathRewriter();
     $rewriter->addRule('/user/{id:int}');
 
-    $result = $rewriter->rewrite(['about']);
+    [$segments, $params] = $rewriter->rewrite(['about']);
 
-    $this->assertSame(['about'], $result->segments);
-    $this->assertSame([], $result->params);
+    $this->assertSame(['about'], $segments);
+    $this->assertSame([], $params);
   }
 
   public function testFluentInterface(): void {
     $rewriter = new PathRewriter();
-    $result = $rewriter
+    [$segments] = $rewriter
       ->addRule('/user/{id:int}')
       ->addRule('/post/{slug}')
       ->rewrite(['user', '123']);
 
-    $this->assertSame(['user', 'id'], $result->segments);
+    $this->assertSame(['user', 'id'], $segments);
   }
 
   public function testEmptyRewriter(): void {
     $rewriter = new PathRewriter();
-    $result = $rewriter->rewrite(['any', 'path']);
+    [$segments, $params] = $rewriter->rewrite(['any', 'path']);
 
-    $this->assertSame(['any', 'path'], $result->segments);
-    $this->assertSame([], $result->params);
+    $this->assertSame(['any', 'path'], $segments);
+    $this->assertSame([], $params);
   }
 
   public function testRewriteWithPathStringRule(): void {
@@ -122,9 +122,9 @@ class PathRewriterTest extends TestCase {
     $rewriter->addRule($rule);
     $rewriter->addRule('/user/{id:int}');
 
-    $result = $rewriter->rewrite(['legacy', '123']);
+    [$segments, $params] = $rewriter->rewrite(['legacy', '123']);
 
-    $this->assertSame(['user', 'id'], $result->segments);
-    $this->assertSame(['id' => '123'], $result->params);
+    $this->assertSame(['user', 'id'], $segments);
+    $this->assertSame(['id' => '123'], $params);
   }
 }

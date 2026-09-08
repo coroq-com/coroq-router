@@ -28,9 +28,12 @@ class PathRewriter {
   }
 
   /**
+   * Apply the rules to segments
+   *
    * @param array<string> $segments
+   * @return array{0: array<string>, 1: array<string, string>} Rewritten segments and parameters
    */
-  public function rewrite(array $segments): PathRewriteResult {
+  public function rewrite(array $segments): array {
     $params = [];
     foreach ($this->rules as $rule) {
       $result = $rule->apply($segments);
@@ -44,6 +47,6 @@ class PathRewriter {
         $params += $result->params;
       }
     }
-    return new PathRewriteResult($segments, $params);
+    return [$segments, $params];
   }
 }

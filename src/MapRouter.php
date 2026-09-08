@@ -16,13 +16,7 @@ use InvalidArgumentException;
 class MapRouter implements RouterInterface {
   private array $map;
 
-  public function __construct(
-    array $map = [],
-  ) {
-    $this->setMap($map);
-  }
-
-  public function setMap(array $map): void {
+  public function __construct(array $map) {
     $this->map = $map;
   }
 

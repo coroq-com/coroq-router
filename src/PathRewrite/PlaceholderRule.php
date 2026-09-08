@@ -13,14 +13,15 @@ class PlaceholderRule implements PathRewriteRuleInterface {
     'uuid' => '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
   ];
 
-  private string $pattern;
+  /** @var array<array{regex: string, rewritten: string, paramNames: array<string>}> */
+  private array $patternSegments;
 
   public function __construct(string $pattern) {
-    $this->pattern = $pattern;
+    $this->patternSegments = $this->compile($pattern);
   }
 
   public function apply(array $segments): ?PathRewriteResult {
-    $patternSegments = $this->compile();
+    $patternSegments = $this->patternSegments;
     $patternCount = count($patternSegments);
 
     // Not enough segments to match pattern
@@ -65,8 +66,8 @@ class PlaceholderRule implements PathRewriteRuleInterface {
    * Compile pattern into per-segment regex patterns
    * @return array<array{regex: string, rewritten: string, paramNames: array<string>}>
    */
-  private function compile(): array {
-    $segments = $this->splitPattern($this->pattern);
+  private function compile(string $pattern): array {
+    $segments = $this->splitPattern($pattern);
     $result = [];
     $allParamNames = [];
 

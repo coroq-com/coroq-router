@@ -118,19 +118,15 @@ class PlaceholderRuleTest extends TestCase {
   }
 
   public function testUnknownTypeThrowsException(): void {
-    $rule = new PlaceholderRule('/item/{id:unknown}');
-
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Unknown placeholder type: unknown');
-    $rule->apply(['item', 'any-value-here']);
+    new PlaceholderRule('/item/{id:unknown}');
   }
 
   public function testDuplicateParameterNameThrowsException(): void {
-    $rule = new PlaceholderRule('/user/{id}/post/{id}');
-
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('Duplicate parameter name: id');
-    $rule->apply(['user', '1', 'post', '2']);
+    new PlaceholderRule('/user/{id}/post/{id}');
   }
 
   public function testPrefixMatch(): void {

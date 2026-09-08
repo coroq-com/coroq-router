@@ -296,6 +296,7 @@ class MapRouterTest extends TestCase {
     ]);
 
     $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Segments must be strings, int given.');
     $router->route([123]);
   }
 
@@ -324,5 +325,26 @@ class MapRouterTest extends TestCase {
 
     $this->assertSame(['fallback-result'], $router->route(['a', 'b']));
     $this->assertSame(['a-handler'], $router->route(['a']));
+  }
+
+  /**
+   * Test that the exception reports the segments given to route(), not the segments
+   * left at the level where matching failed
+   */
+  public function testRouteNotFoundExceptionReportsRoutedSegments(): void {
+    $router = new MapRouter([
+      'a' => [
+        'b' => 'handler',
+      ],
+    ]);
+
+    try {
+      $router->route(['a', 'c']);
+      $this->fail('RouteNotFoundException was not thrown');
+    }
+    catch (\Coroq\Router\RouteNotFoundException $exception) {
+      $this->assertSame('No route for /a/c', $exception->getMessage());
+      $this->assertSame(['a', 'c'], $exception->getSegments());
+    }
   }
 }

@@ -45,7 +45,10 @@ class Path {
 
     foreach ($baseSegments as $index => $baseSegment) {
       if (($segments[$index] ?? null) !== $baseSegment) {
-        throw new RouteNotFoundException();
+        throw new RouteNotFoundException(
+          sprintf('%s is not under the base path %s', self::fromSegments($segments), $basePath),
+          $segments
+        );
       }
     }
 

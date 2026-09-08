@@ -27,15 +27,21 @@ class MapRouter implements RouterInterface {
   }
 
   public function route(array $segments): array {
-    return $this->routeWithMap($this->map, $segments);
+    return $this->routeWithMap($this->map, $segments, $segments);
   }
 
-  private function routeWithMap(array $map, array $segments): array {
+  /**
+   * @param array<string> $routedSegments Segments given to route(), used for error messages
+   */
+  private function routeWithMap(array $map, array $segments, array $routedSegments): array {
     $route = [];
     $segment = $segments[0] ?? '';
 
     if (!is_string($segment)) {
-      throw new InvalidArgumentException();
+      throw new InvalidArgumentException(sprintf(
+        'Segments must be strings, %s given.',
+        get_debug_type($segment)
+      ));
     }
 
     foreach ($map as $key => $value) {
@@ -56,7 +62,7 @@ class MapRouter implements RouterInterface {
           }
 
           if (is_array($value)) {
-            return array_merge($route, $this->routeWithMap($value, array_slice($segments, 1)));
+            return array_merge($route, $this->routeWithMap($value, array_slice($segments, 1), $routedSegments));
           }
 
           // A scalar value can not go deeper, so it only matches the last segment
@@ -70,6 +76,9 @@ class MapRouter implements RouterInterface {
         continue;
       }
     }
-    throw new RouteNotFoundException();
+    throw new RouteNotFoundException(
+      sprintf('No route for %s', Path::fromSegments($routedSegments)),
+      $routedSegments
+    );
   }
 }

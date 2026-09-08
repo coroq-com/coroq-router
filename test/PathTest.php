@@ -66,8 +66,14 @@ class PathTest extends TestCase {
   }
 
   public function testThrowsWhenSegmentsAreNotUnderBasePath(): void {
-    $this->expectException(RouteNotFoundException::class);
-    Path::removeBasePath('/system/survey', ['other', 'users']);
+    try {
+      Path::removeBasePath('/system/survey', ['other', 'users']);
+      $this->fail('RouteNotFoundException was not thrown');
+    }
+    catch (RouteNotFoundException $exception) {
+      $this->assertSame('/other/users is not under the base path /system/survey', $exception->getMessage());
+      $this->assertSame(['other', 'users'], $exception->getSegments());
+    }
   }
 
   public function testThrowsWhenSegmentOnlyPartiallyMatchesBasePathSegment(): void {

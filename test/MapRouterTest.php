@@ -324,4 +324,19 @@ class MapRouterTest extends TestCase {
     // RouterInterface at string key should delegate with remaining waypoints
     $this->assertSame(['middleware', 'delegated-result'], $router->routePath('/a/b/c'));
   }
+
+  /**
+   * Test that a matched scalar value is dropped when the path continues below it
+   */
+  public function testScalarValueIsNotIncludedWhenPathContinues(): void {
+    $fallbackRouter = $this->createMockRouter(['fallback-result']);
+
+    $router = new MapRouter([
+      'a' => 'a-handler',
+      $fallbackRouter,
+    ]);
+
+    $this->assertSame(['fallback-result'], $router->routePath('/a/b'));
+    $this->assertSame(['a-handler'], $router->routePath('/a'));
+  }
 }

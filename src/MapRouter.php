@@ -61,8 +61,9 @@ class MapRouter implements RouterInterface {
             return array_merge($route, $this->routeWithMap($value, array_slice($waypoints, 1)));
           }
 
-          $route[] = $value;
+          // A scalar value can not go deeper, so it only matches the last waypoint
           if (count($waypoints) <= 1) {
+            $route[] = $value;
             return $route;
           }
         }

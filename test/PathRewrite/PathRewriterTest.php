@@ -110,11 +110,11 @@ class PathRewriterTest extends TestCase {
 
   public function testRewriteWithPathStringRule(): void {
     $rule = new class extends PathStringRule {
-      protected function applyToPath(string $path): ?PathRewriteResult {
+      protected function applyToPath(string $path): ?array {
         if (!preg_match('#\A/legacy/(.+)\z#', $path, $matches)) {
           return null;
         }
-        return PathRewriteResult::fromPath('/user/' . $matches[1], []);
+        return ['/user/' . $matches[1], []];
       }
     };
 

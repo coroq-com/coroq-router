@@ -8,14 +8,14 @@ use PHPUnit\Framework\TestCase;
 class PathStringRuleTest extends TestCase {
   private function makeRule(): PathStringRule {
     return new class extends PathStringRule {
-      protected function applyToPath(string $path): ?PathRewriteResult {
+      protected function applyToPath(string $path): ?array {
         if (!preg_match('#\A/legacy/(.+)/page([0-9]+)\z#', $path, $matches)) {
           return null;
         }
-        return PathRewriteResult::fromPath('/legacy/item/page', [
+        return ['/legacy/item/page', [
           'item' => $matches[1],
           'page' => $matches[2],
-        ]);
+        ]];
       }
     };
   }

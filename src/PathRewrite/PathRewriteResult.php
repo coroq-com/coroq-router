@@ -17,17 +17,4 @@ class PathRewriteResult {
     $this->segments = $segments;
     $this->params = $params;
   }
-
-  /**
-   * Create a result from a path string
-   *
-   * The path is only split into segments. Unlike Path::toSegments(), it is
-   * not percent-decoded, because it is built from already decoded segments.
-   *
-   * @param array<string, string> $params
-   */
-  public static function fromPath(string $path, array $params): self {
-    $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
-    return new self($segments, $params);
-  }
 }

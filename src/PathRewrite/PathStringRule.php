@@ -17,11 +17,26 @@ abstract class PathStringRule implements PathRewriteRuleInterface {
         return null;
       }
     }
-    return $this->applyToPath('/' . implode('/', $segments));
+
+    $result = $this->applyToPath('/' . implode('/', $segments));
+    if ($result === null) {
+      return null;
+    }
+
+    [$path, $params] = $result;
+    return new PathRewriteResult(
+      array_values(array_filter(explode('/', $path), fn($s) => $s !== '')),
+      $params
+    );
   }
 
   /**
-   * @return PathRewriteResult|null Null when the rule does not apply
+   * Rewrite a path string and extract parameters
+   *
+   * The path is already percent-decoded, and the returned path is not decoded
+   * again. Return null when the rule does not apply.
+   *
+   * @return array{0: string, 1: array<string, string>}|null Rewritten path and parameters
    */
-  abstract protected function applyToPath(string $path): ?PathRewriteResult;
+  abstract protected function applyToPath(string $path): ?array;
 }

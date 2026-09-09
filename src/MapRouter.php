@@ -14,23 +14,18 @@ use InvalidArgumentException;
  * - RouterInterface instances are delegated to for further processing
  */
 class MapRouter implements RouterInterface {
-  private array $map;
+  /** @var array<mixed> */
+  private array $entries;
 
   public function __construct(array $map) {
-    $this->map = $map;
+    $this->entries = [];
+    foreach ($map as $key => $value) {
+      $this->entries[] = is_int($key) ? $value : new SegmentRouter($key, $value);
+    }
   }
 
   public function route(array $segments): array {
-    return $this->routeWithMap($this->map, $segments, $segments);
-  }
-
-  /**
-   * @param array<string> $routedSegments Segments given to route(), used for error messages
-   */
-  private function routeWithMap(array $map, array $segments, array $routedSegments): array {
-    $route = [];
     $segment = $segments[0] ?? '';
-
     if (!is_string($segment)) {
       throw new InvalidArgumentException(sprintf(
         'Segments must be strings, %s given.',
@@ -38,41 +33,22 @@ class MapRouter implements RouterInterface {
       ));
     }
 
-    foreach ($map as $key => $value) {
+    $route = [];
+    foreach ($this->entries as $entry) {
+      if (!($entry instanceof RouterInterface)) {
+        $route[] = $entry;
+        continue;
+      }
       try {
-        if (is_int($key)) {
-          if ($value instanceof RouterInterface) {
-            return array_merge($route, $value->route($segments));
-          }
-          $route[] = $value;
-          continue;
-        }
-
-        assert(is_string($key));
-
-        if ($key == $segment) {
-          if ($value instanceof RouterInterface) {
-            return array_merge($route, $value->route(array_slice($segments, 1)));
-          }
-
-          if (is_array($value)) {
-            return array_merge($route, $this->routeWithMap($value, array_slice($segments, 1), $routedSegments));
-          }
-
-          // A scalar value can not go deeper, so it only matches the last segment
-          if (count($segments) <= 1) {
-            $route[] = $value;
-            return $route;
-          }
-        }
+        return array_merge($route, $entry->route($segments));
       }
       catch (RouteSkipException) {
         continue;
       }
     }
     throw new RouteNotFoundException(
-      sprintf('No route for %s', Path::fromSegments($routedSegments)),
-      $routedSegments
+      sprintf('No route for %s', Path::fromSegments($segments)),
+      $segments
     );
   }
 }

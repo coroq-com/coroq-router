@@ -122,6 +122,20 @@ The keys are read like this:
 
 Entries are processed in order, and matching stops as soon as a key matches, so a numeric-keyed value is collected only when it comes before the key that matches. A value that is not an array matches only when the path ends there; if segments remain below it, it is not a match.
 
+PHP turns a decimal integer array key into an int, so `'2026' => ...` is read as a numeric key and its value is collected on every route instead of matching the segment `2026`. Use `SegmentRouter` for those segments:
+
+```php
+$router = new MapRouter([
+    'archive' => [
+        new SegmentRouter(2026, ['' => Controller\Archive\Year2026::class]),
+        new SegmentRouter(2025, Controller\Archive\Year2025::class),
+        'latest' => Controller\Archive\LatestController::class,
+    ],
+]);
+```
+
+`SegmentRouter` matches one segment against a fixed value, and reads that value the way a route map does: a nested array goes one level deeper, a router is delegated to, and anything else matches when the path ends there. MapRouter uses it for every string key in a map, so nothing else about routing changes.
+
 When nothing matches, `RouteNotFoundException` is thrown - catch it at the entry point of the application to render your 404 page. It reports the segments it was given, both in its message and through `getSegments()`.
 
 ## Segments

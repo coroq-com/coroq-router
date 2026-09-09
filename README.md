@@ -53,8 +53,7 @@ $segments = Path::removeBasePath('/system/survey', $segments);
 // ['users', '42']
 
 // Rewrite the dynamic segment into a fixed name, taking its value out
-$rewriter = new PathRewriter();
-$rewriter->addRule('/users/{userId:int}');
+$rewriter = new PathRewriter(['/users/{userId:int}']);
 [$segments, $params] = $rewriter->rewrite($segments);
 // $segments = ['users', 'userId'], $params = ['userId' => '42']
 
@@ -197,8 +196,7 @@ This library does not generate URLs from routes. When emitting links or redirect
 MapRouter matches segments exactly as strings. When you need dynamic segments like `/user/123` or `/post/hello-world`, use `PathRewriter` to extract parameters first, then route the normalized segments.
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRules([
+$rewriter = new PathRewriter([
     '/post/{postName}',
 ]);
 
@@ -232,8 +230,7 @@ Use type constraints to restrict what a placeholder matches:
 | `uuid` | UUID format | `550e8400-e29b-41d4-a716-446655440000` |
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRules([
+$rewriter = new PathRewriter([
     '/token/{value:hex}',           // matches /token/5f3a, not /token/xyz
     '/item/{id:uuid}',              // matches valid UUIDs only
     '/page/{name}',                 // matches any single segment (default type)
@@ -245,22 +242,19 @@ $rewriter->addRules([
 Placeholders can appear multiple times in a path, or even within a single segment:
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRule('/user/{userid:int}/post/{postid:int}');
+$rewriter = new PathRewriter(['/user/{userid:int}/post/{postid:int}']);
 // ['user', '42', 'post', '99'] → segments: ['user', 'userid', 'post', 'postid']
 //                                params: ['userid' => '42', 'postid' => '99']
 ```
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRule('/file/{name}.{ext}');
+$rewriter = new PathRewriter(['/file/{name}.{ext}']);
 // ['file', 'report.pdf'] → segments: ['file', 'name.ext']
 //                          params: ['name' => 'report', 'ext' => 'pdf']
 ```
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRule('/archive/{year:int}-{month:int}-{day:int}');
+$rewriter = new PathRewriter(['/archive/{year:int}-{month:int}-{day:int}']);
 // ['archive', '2025-01-15'] → segments: ['archive', 'year-month-day']
 //                             params: ['year' => '2025', 'month' => '01', 'day' => '15']
 ```
@@ -272,8 +266,7 @@ Placeholder names must be ASCII, because they become named capture groups. The l
 Rules are applied sequentially. Segments that no rule matches pass through unchanged, so a rule that never fires is not an error - the segments simply arrive at the router as they were. Each rule matches from the first segment; remaining segments are preserved:
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRule('/user/{userid:int}');
+$rewriter = new PathRewriter(['/user/{userid:int}']);
 
 // ['user', '123', 'posts'] → segments: ['user', 'userid', 'posts'], params: ['userid' => '123']
 // The 'posts' segment is preserved for further routing
@@ -282,8 +275,7 @@ $rewriter->addRule('/user/{userid:int}');
 Multiple rules can work together, with params accumulating:
 
 ```php
-$rewriter = new PathRewriter();
-$rewriter->addRules([
+$rewriter = new PathRewriter([
     '/user/{userid:int}',
     '/user/userid/{action:alpha}',
 ]);
@@ -313,7 +305,7 @@ class ArchiveRule implements PathRewriteRuleInterface {
     }
 }
 
-$rewriter->addRule(new ArchiveRule());
+$rewriter = new PathRewriter([new ArchiveRule()]);
 ```
 
 Rules that match across segment boundaries are easier to write against a path string. Extend `PathStringRule` for those - it converts the segments to a path string, and the returned path back into segments:
@@ -333,7 +325,7 @@ class RegexRule extends PathStringRule {
     }
 }
 
-$rewriter->addRule(new RegexRule());
+$rewriter = new PathRewriter([new RegexRule()]);
 ```
 
 A path string cannot represent a segment containing a slash, so `PathStringRule` does not apply to segments that contain one.

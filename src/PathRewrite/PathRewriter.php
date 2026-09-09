@@ -5,26 +5,16 @@ namespace Coroq\Router\PathRewrite;
 
 class PathRewriter {
   /** @var array<PathRewriteRuleInterface> */
-  private array $rules = [];
-
-  public function __construct() {}
-
-  public function addRule(PathRewriteRuleInterface|string $rule): self {
-    if (is_string($rule)) {
-      $rule = new PlaceholderRule($rule);
-    }
-    $this->rules[] = $rule;
-    return $this;
-  }
+  private array $rules;
 
   /**
    * @param array<PathRewriteRuleInterface|string> $rules
    */
-  public function addRules(array $rules): self {
-    foreach ($rules as $rule) {
-      $this->addRule($rule);
-    }
-    return $this;
+  public function __construct(array $rules) {
+    $this->rules = array_map(
+      fn($rule) => is_string($rule) ? new PlaceholderRule($rule) : $rule,
+      array_values($rules)
+    );
   }
 
   /**

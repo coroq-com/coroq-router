@@ -122,7 +122,19 @@ from `[^/]+` to `.+`, so a segment that contains a decoded slash now matches.
 **A placeholder pattern is compiled when the rule is constructed.** An unknown
 type or a duplicate parameter name used to throw on the first request that
 reached the rule; it now throws from `new PlaceholderRule(...)` and from
-`PathRewriter::addRule()`.
+`new PathRewriter(...)`.
+
+**`PathRewriter` takes its rules as a constructor argument.** `addRule()` and
+`addRules()` are gone, so a rewriter cannot change after it is built.
+
+```php
+// 1.x
+$rewriter = new PathRewriter();
+$rewriter->addRules(['/user/{id:int}']);
+
+// 2.0
+$rewriter = new PathRewriter(['/user/{id:int}']);
+```
 
 ## New in 2.0
 

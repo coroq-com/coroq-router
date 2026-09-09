@@ -12,6 +12,8 @@ A minimal PHP router for mapping request paths to handlers.
 composer require coroq/router
 ```
 
+Upgrading from 1.x? See [UPGRADING.md](UPGRADING.md).
+
 ## Quick Start
 
 ```php

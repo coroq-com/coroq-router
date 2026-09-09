@@ -5,17 +5,15 @@ namespace Coroq\Router;
 use InvalidArgumentException;
 
 /**
- * Array-based router that maps waypoints to handlers using a recursive structure
+ * Array-based router that maps segments to handlers using a recursive structure
  *
  * Route maps use a simple convention:
  * - Items with numeric keys are always included in results (useful for middleware)
- * - Items with string keys are matched against waypoints
- * - Empty string keys ('') match empty waypoints
+ * - Items with string keys are matched against segments
+ * - Empty string keys ('') match empty segments
  * - RouterInterface instances are delegated to for further processing
  */
 class MapRouter implements RouterInterface {
-  use PathRouting;
-
   private array $map;
 
   public function __construct(
@@ -28,15 +26,15 @@ class MapRouter implements RouterInterface {
     $this->map = $map;
   }
 
-  public function route(array $waypoints): array {
-    return $this->routeWithMap($this->map, $waypoints);
+  public function route(array $segments): array {
+    return $this->routeWithMap($this->map, $segments);
   }
 
-  private function routeWithMap(array $map, array $waypoints): array {
+  private function routeWithMap(array $map, array $segments): array {
     $route = [];
-    $waypoint = $waypoints[0] ?? '';
+    $segment = $segments[0] ?? '';
 
-    if (!is_string($waypoint)) {
+    if (!is_string($segment)) {
       throw new InvalidArgumentException();
     }
 
@@ -44,7 +42,7 @@ class MapRouter implements RouterInterface {
       try {
         if (is_int($key)) {
           if ($value instanceof RouterInterface) {
-            return array_merge($route, $value->route($waypoints));
+            return array_merge($route, $value->route($segments));
           }
           $route[] = $value;
           continue;
@@ -52,17 +50,17 @@ class MapRouter implements RouterInterface {
 
         assert(is_string($key));
 
-        if ($key == $waypoint) {
+        if ($key == $segment) {
           if ($value instanceof RouterInterface) {
-            return array_merge($route, $value->route(array_slice($waypoints, 1)));
+            return array_merge($route, $value->route(array_slice($segments, 1)));
           }
 
           if (is_array($value)) {
-            return array_merge($route, $this->routeWithMap($value, array_slice($waypoints, 1)));
+            return array_merge($route, $this->routeWithMap($value, array_slice($segments, 1)));
           }
 
-          // A scalar value can not go deeper, so it only matches the last waypoint
-          if (count($waypoints) <= 1) {
+          // A scalar value can not go deeper, so it only matches the last segment
+          if (count($segments) <= 1) {
             $route[] = $value;
             return $route;
           }

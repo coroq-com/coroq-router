@@ -3,11 +3,11 @@ declare(strict_types=1);
 namespace Coroq\Router;
 
 /**
- * Defines router components that process waypoints and return matched handlers
+ * Defines router segments that process segments and return matched handlers
  */
 interface RouterInterface {
   /**
-   * Process waypoints and return matched handlers
+   * Process segments and return matched handlers
    */
-  public function route(array $waypoints): array;
+  public function route(array $segments): array;
 }

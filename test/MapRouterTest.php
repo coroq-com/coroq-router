@@ -16,11 +16,11 @@ class MapRouterTest extends TestCase {
     ]);
     
     // Successful route with string value
-    $this->assertSame(['p1', 'p2', 'p3'], $router->routePath('/a'));
+    $this->assertSame(['p1', 'p2', 'p3'], $router->route(['a']));
     
     // Non-existent route should throw RouteNotFoundException
     $this->expectException(\Coroq\Router\RouteNotFoundException::class);
-    $router->routePath('/b');
+    $router->route(['b']);
   }
 
   /**
@@ -37,13 +37,13 @@ class MapRouterTest extends TestCase {
     ]);
     
     // Successful nested route
-    $this->assertSame(['p1', 'p2', 'p3', 'p4'], $router->routePath('/a/b'));
+    $this->assertSame(['p1', 'p2', 'p3', 'p4'], $router->route(['a', 'b']));
   }
   
   /**
-   * Test that non-existent nested waypoint throws exception
+   * Test that non-existent nested segment throws exception
    */
-  public function testNonExistentNestedWaypoint(): void {
+  public function testNonExistentNestedSegment(): void {
     $router = new MapRouter([
       'p1',
       'p2',
@@ -53,9 +53,9 @@ class MapRouterTest extends TestCase {
       ],
     ]);
     
-    // Non-existent nested waypoint should throw RouteNotFoundException
+    // Non-existent nested segment should throw RouteNotFoundException
     $this->expectException(\Coroq\Router\RouteNotFoundException::class);
-    $router->routePath('/a/c');
+    $router->route(['a', 'c']);
   }
 
   /**
@@ -68,7 +68,7 @@ class MapRouterTest extends TestCase {
         '' => 'p2',
       ],
     ]);
-    $this->assertSame(['p1', 'p2'], $router->routePath('/a'));
+    $this->assertSame(['p1', 'p2'], $router->route(['a']));
   }
 
   /**
@@ -86,10 +86,10 @@ class MapRouterTest extends TestCase {
     ]);
     
     // Test different branches at root level
-    $this->assertSame(['p1', 'p2', 'p5'], $router->routePath('/b'));
+    $this->assertSame(['p1', 'p2', 'p5'], $router->route(['b']));
     
     // Test nested branch
-    $this->assertSame(['p1', 'p2', 'p3', 'p6'], $router->routePath('/a/c'));
+    $this->assertSame(['p1', 'p2', 'p3', 'p6'], $router->route(['a', 'c']));
   }
   
   /**
@@ -98,7 +98,7 @@ class MapRouterTest extends TestCase {
   public function testEmptyMap(): void {
     $emptyRouter = new MapRouter([]);
     $this->expectException(\Coroq\Router\RouteNotFoundException::class);
-    $emptyRouter->routePath('/a');
+    $emptyRouter->route(['a']);
   }
   
   /**
@@ -114,33 +114,19 @@ class MapRouterTest extends TestCase {
         ],
       ],
     ]);
-    $this->assertSame(['deep'], $deepRouter->routePath('/a/b/c/d'));
+    $this->assertSame(['deep'], $deepRouter->route(['a', 'b', 'c', 'd']));
   }
   
   /**
-   * Test path normalization (leading/trailing slashes and empty paths)
+   * Test routing with empty segments
    */
-  public function testPathNormalization(): void {
-    // Test root path
-    $rootRouter = new MapRouter([
+  public function testRootRouting(): void {
+    $router = new MapRouter([
       'p1',
       '' => 'root-handler',
     ]);
-    
-    // Empty path and slash should both route to root
-    $this->assertSame(['p1', 'root-handler'], $rootRouter->routePath(''));
-    $this->assertSame(['p1', 'root-handler'], $rootRouter->routePath('/'));
-    
-    // Test trailing slashes
-    $router = new MapRouter([
-      'a' => [
-        'b' => 'handler',
-      ],
-    ]);
-    
-    // Path with and without trailing slash should route the same
-    $this->assertSame(['handler'], $router->routePath('/a/b'));
-    $this->assertSame(['handler'], $router->routePath('/a/b/'));
+
+    $this->assertSame(['p1', 'root-handler'], $router->route([]));
   }
   
   /**
@@ -164,7 +150,7 @@ class MapRouterTest extends TestCase {
     
     // Test collecting all numeric values along the path
     $this->assertSame(['n1', 'n2', 's1', 's2', 'd1', 'd2', 'final'], 
-      $router->routePath('/a/b/c'));
+      $router->route(['a', 'b', 'c']));
   }
 
   /**
@@ -188,7 +174,7 @@ class MapRouterTest extends TestCase {
     ]);
     
     // Should delegate to the mock router and merge results
-    $this->assertSame(['middleware1', 'mock-result'], $router->routePath('/a'));
+    $this->assertSame(['middleware1', 'mock-result'], $router->route(['a']));
   }
 
   /**
@@ -212,11 +198,11 @@ class MapRouterTest extends TestCase {
     
     // Test delegation at second level
     $this->assertSame(['common-middleware', 'a-middleware', 'result-1'], 
-      $router->routePath('/a/b'));
+      $router->route(['a', 'b']));
     
     // Test delegation at third level
     $this->assertSame(['common-middleware', 'a-middleware', 'c-middleware', 'result-2'], 
-      $router->routePath('/a/c/d'));
+      $router->route(['a', 'c', 'd']));
   }
 
   /**
@@ -236,7 +222,7 @@ class MapRouterTest extends TestCase {
     
     // Should delegate to the mock router and not continue to 'b'
     // since RouterInterface delegation takes precedence
-    $this->assertSame(['middleware1', 'delegate-result'], $router->routePath('/a/b'));
+    $this->assertSame(['middleware1', 'delegate-result'], $router->route(['a', 'b']));
   }
 
   private function createSkippingRouter(): \Coroq\Router\RouterInterface {
@@ -255,7 +241,7 @@ class MapRouterTest extends TestCase {
       ],
     ]);
     
-    $this->assertSame(['result'], $router->routePath('/a'));
+    $this->assertSame(['result'], $router->route(['a']));
   }
 
   public function testAllRoutesSkipped(): void {
@@ -270,7 +256,7 @@ class MapRouterTest extends TestCase {
     ]);
     
     $this->expectException(\Coroq\Router\RouteNotFoundException::class);
-    $router->routePath('/a');
+    $router->route(['a']);
   }
 
   public function testNestedRouteSkipping(): void {
@@ -288,7 +274,7 @@ class MapRouterTest extends TestCase {
       ],
     ]);
     
-    $this->assertSame(['m1', 'inner1', 'result-after-skip'], $router->routePath('/a/b'));
+    $this->assertSame(['m1', 'inner1', 'result-after-skip'], $router->route(['a', 'b']));
   }
 
   public function testNumericKeySkipping(): void {
@@ -301,10 +287,10 @@ class MapRouterTest extends TestCase {
       'a' => 'endpoint',
     ]);
 
-    $this->assertSame(['m1', 'm2', 'endpoint'], $router->routePath('/a'));
+    $this->assertSame(['m1', 'm2', 'endpoint'], $router->route(['a']));
   }
 
-  public function testNonStringWaypointThrowsException(): void {
+  public function testNonStringSegmentThrowsException(): void {
     $router = new MapRouter([
       'a' => 'handler',
     ]);
@@ -321,8 +307,8 @@ class MapRouterTest extends TestCase {
       'a' => $mockRouter,
     ]);
 
-    // RouterInterface at string key should delegate with remaining waypoints
-    $this->assertSame(['middleware', 'delegated-result'], $router->routePath('/a/b/c'));
+    // RouterInterface at string key should delegate with remaining segments
+    $this->assertSame(['middleware', 'delegated-result'], $router->route(['a', 'b', 'c']));
   }
 
   /**
@@ -336,7 +322,7 @@ class MapRouterTest extends TestCase {
       $fallbackRouter,
     ]);
 
-    $this->assertSame(['fallback-result'], $router->routePath('/a/b'));
-    $this->assertSame(['a-handler'], $router->routePath('/a'));
+    $this->assertSame(['fallback-result'], $router->route(['a', 'b']));
+    $this->assertSame(['a-handler'], $router->route(['a']));
   }
 }

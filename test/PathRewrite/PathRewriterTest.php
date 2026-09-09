@@ -127,4 +127,29 @@ class PathRewriterTest extends TestCase {
     $this->assertSame(['user', 'id'], $segments);
     $this->assertSame(['id' => '123'], $params);
   }
+
+  public function testRewriteWithCustomRule(): void {
+    $rule = new class implements PathRewriteRuleInterface {
+      public function apply(array $segments): ?PathRewriteResult {
+        if (($segments[0] ?? null) !== 'archive' || count($segments) < 2) {
+          return null;
+        }
+        return new PathRewriteResult(
+          array_merge(['archive', 'year'], array_slice($segments, 2)),
+          ['year' => $segments[1]]
+        );
+      }
+    };
+
+    $rewriter = new PathRewriter();
+    $rewriter->addRule($rule);
+
+    [$segments, $params] = $rewriter->rewrite(['archive', '2026', 'summary']);
+    $this->assertSame(['archive', 'year', 'summary'], $segments);
+    $this->assertSame(['year' => '2026'], $params);
+
+    [$segments, $params] = $rewriter->rewrite(['users', '1']);
+    $this->assertSame(['users', '1'], $segments);
+    $this->assertSame([], $params);
+  }
 }

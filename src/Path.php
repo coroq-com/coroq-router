@@ -28,4 +28,27 @@ class Path {
   public static function fromSegments(array $segments): string {
     return '/' . implode('/', array_map('rawurlencode', $segments));
   }
+
+  /**
+   * Remove the base path of an application from segments
+   *
+   * Route maps are written relative to the application root, so a request path
+   * must have the base path removed before it is routed.
+   *
+   * @param string $basePath Base path of the application like "/system/survey"
+   * @param array<string> $segments Segments of a request path
+   * @return array<string> Segments relative to the application root
+   * @throws RouteNotFoundException When the segments are not under the base path
+   */
+  public static function removeBasePath(string $basePath, array $segments): array {
+    $baseSegments = self::toSegments($basePath);
+
+    foreach ($baseSegments as $index => $baseSegment) {
+      if (($segments[$index] ?? null) !== $baseSegment) {
+        throw new RouteNotFoundException();
+      }
+    }
+
+    return array_slice($segments, count($baseSegments));
+  }
 }

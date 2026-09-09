@@ -27,12 +27,15 @@ class PathRewriter {
     return $this;
   }
 
-  public function rewrite(string $path): PathRewriteResult {
+  /**
+   * @param array<string> $segments
+   */
+  public function rewrite(array $segments): PathRewriteResult {
     $params = [];
     foreach ($this->rules as $rule) {
-      $result = $rule->apply($path);
+      $result = $rule->apply($segments);
       if ($result !== null) {
-        $path = $result->path;
+        $segments = $result->segments;
         $duplicates = array_intersect_key($result->params, $params);
         if ($duplicates) {
           $name = array_keys($duplicates)[0];
@@ -41,6 +44,6 @@ class PathRewriter {
         $params += $result->params;
       }
     }
-    return new PathRewriteResult($path, $params);
+    return new PathRewriteResult($segments, $params);
   }
 }

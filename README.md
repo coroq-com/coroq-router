@@ -72,7 +72,7 @@ $handlers = $router->route($segments);
 
 ## Using the Handlers
 
-What to do with a route is up to the application. A common arrangement is to make the values in the route map class names of PSR-15 middleware, ending with a request handler, and run them as a chain:
+What to do with a route is up to the application. A common arrangement is to make the values in the route map class names of PSR-15 middleware, ending with a request handler. Instantiate them and run them as a chain:
 
 ```php
 $handlers = $router->route($segments);
@@ -84,7 +84,7 @@ $request = $request->withAttribute('params', $params);  // path parameters from 
 $response = $runner->handle($request, $queue);
 ```
 
-`$container` is any PSR-11 container and `$runner` any PSR-15 runner (Relay, for example). The last class in the route is the one that produces the response, so each route has its own request handler instead of one handler dispatching between actions.
+`$container` is any PSR-11 container and `$runner` any PSR-15 runner (Relay, for example). The last class in the route is the one that produces the response. Each route has its own request handler, instead of one handler dispatching between actions.
 
 None of this is required, though. Route map values can be closures, objects, or whatever else suits the application - the library collects them and hands them back.
 
@@ -120,7 +120,7 @@ The keys are read like this:
 - **Empty string key (`''`)** - Matches the end of the path
 - **Nested arrays** - One level deeper in the path
 
-Entries are processed in order, and matching stops as soon as a key matches, so a numeric-keyed value is collected only when it comes before the key that matches. A value that is not an array matches only when the path ends there; if segments remain below it, it is not a match.
+Entries are processed in order, and matching stops as soon as a key matches. A numeric-keyed value is therefore collected only when it comes before the key that matches. A value that is not an array matches only when the path ends there; if segments remain below it, it is not a match.
 
 When nothing matches, `RouteNotFoundException` is thrown - catch it at the entry point of the application to render your 404 page. It reports the segments it was given, both in its message and through `getSegments()`.
 
@@ -186,7 +186,7 @@ $segments = Path::toSegments($request->getUri()->getPath());
 $segments = Path::removeBasePath('/system/survey', $segments);  // ['users', 'detail']
 ```
 
-Requests outside the base path throw `RouteNotFoundException` - the same exception routing throws, so a single catch block handles both.
+Requests outside the base path throw `RouteNotFoundException` - the same exception that routing throws, so a single catch block handles both.
 
 This library does not generate URLs from routes. When emitting links or redirects, prepend the base path yourself.
 
@@ -356,9 +356,9 @@ $routeMap = [
 ];
 ```
 
-Under a numeric key it receives the segments unchanged, and is reached when none of the entries before it matched - so a router meant as a fallback belongs at the end of the map. Note that it only covers its own level: once a string key matches, routing descends into that level and never comes back to the outer map.
+Under a numeric key it receives the segments unchanged, and is reached when none of the entries before it matched, so a router used as a fallback should be placed at the end of the map. It only covers its own level: once a string key matches, routing descends into that level and does not return to the outer map.
 
-A router cannot always tell in advance whether it applies - it may have to look something up first. Throwing `RouteSkipException` from `route()` says "not this one": MapRouter ignores that entry and carries on through the rest of the map. A `RouteNotFoundException` from a delegated router, by contrast, ends routing.
+A router may not know whether it applies until it checks something, for example a database. Throwing `RouteSkipException` from `route()` means that the router does not apply here: MapRouter ignores that entry and continues through the rest of the map. A `RouteNotFoundException` from a delegated router, in contrast, ends routing.
 
 ## License
 

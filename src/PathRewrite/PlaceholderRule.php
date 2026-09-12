@@ -13,7 +13,7 @@ class PlaceholderRule implements PathRewriteRuleInterface {
     'uuid' => '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',
   ];
 
-  /** @var array<array{regex: string, rewritten: string, paramNames: array<string>}> */
+  /** @var list<array{regex: string, rewritten: string, paramNames: list<string>}> */
   private array $patternSegments;
 
   public function __construct(string $pattern) {
@@ -56,7 +56,7 @@ class PlaceholderRule implements PathRewriteRuleInterface {
 
   /**
    * Split the pattern into segments, filtering empty ones
-   * @return array<string>
+   * @return list<string>
    */
   private function splitPattern(string $pattern): array {
     return array_values(array_filter(explode('/', $pattern), fn($s) => $s !== ''));
@@ -64,7 +64,7 @@ class PlaceholderRule implements PathRewriteRuleInterface {
 
   /**
    * Compile pattern into per-segment regex patterns
-   * @return array<array{regex: string, rewritten: string, paramNames: array<string>}>
+   * @return list<array{regex: string, rewritten: string, paramNames: list<string>}>
    */
   private function compile(string $pattern): array {
     $segments = $this->splitPattern($pattern);
@@ -87,7 +87,7 @@ class PlaceholderRule implements PathRewriteRuleInterface {
 
   /**
    * Compile a single segment
-   * @return array{regex: string, rewritten: string, paramNames: array<string>}
+   * @return array{regex: string, rewritten: string, paramNames: list<string>}
    */
   private function compileSegment(string $segment): array {
     $paramNames = [];

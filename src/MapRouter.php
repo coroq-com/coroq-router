@@ -8,13 +8,13 @@ use InvalidArgumentException;
  * Array-based router that maps segments to handlers using a recursive structure
  *
  * Route maps use a simple convention:
- * - Items with numeric keys are always included in results (useful for middleware)
+ * - Items with numeric keys are collected as routing passes them (useful for middleware)
  * - Items with string keys are matched against segments
  * - Empty string keys ('') match empty segments
  * - RouterInterface instances are delegated to for further processing
  */
 class MapRouter implements RouterInterface {
-  /** @var array<mixed> */
+  /** @var list<mixed> */
   private array $entries;
 
   public function __construct(array $map) {

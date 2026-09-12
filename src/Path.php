@@ -13,7 +13,7 @@ class Path {
    * Convert a URL path into segments
    *
    * @param string $path URL path like "/users/detail"
-   * @return array<string> Percent-decoded path segments
+   * @return list<string> Percent-decoded path segments
    */
   public static function toSegments(string $path): array {
     $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
@@ -23,7 +23,7 @@ class Path {
   /**
    * Convert segments back into a URL path
    *
-   * @param array<string> $segments
+   * @param list<string> $segments
    */
   public static function fromSegments(array $segments): string {
     return '/' . implode('/', array_map('rawurlencode', $segments));
@@ -36,8 +36,8 @@ class Path {
    * must have the base path removed before it is routed.
    *
    * @param string $basePath Base path of the application like "/system/survey"
-   * @param array<string> $segments Segments of a request path
-   * @return array<string> Segments relative to the application root
+   * @param list<string> $segments Segments of a request path
+   * @return list<string> Segments relative to the application root
    * @throws RouteNotFoundException When the segments are not under the base path
    */
   public static function removeBasePath(string $basePath, array $segments): array {

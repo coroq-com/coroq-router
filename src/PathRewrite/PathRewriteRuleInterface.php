@@ -7,7 +7,7 @@ interface PathRewriteRuleInterface {
   /**
    * Rewrite segments and extract parameters
    *
-   * @param array<string> $segments
+   * @param list<string> $segments
    * @return PathRewriteResult|null Null when the rule does not apply
    */
   public function apply(array $segments): ?PathRewriteResult;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Coroq\Router\PathRewrite;
 
 class PathRewriter {
-  /** @var array<PathRewriteRuleInterface> */
+  /** @var list<PathRewriteRuleInterface> */
   private array $rules;
 
   /**
@@ -20,8 +20,8 @@ class PathRewriter {
   /**
    * Apply the rules to segments
    *
-   * @param array<string> $segments
-   * @return array{0: array<string>, 1: array<string, string>} Rewritten segments and parameters
+   * @param list<string> $segments
+   * @return array{0: list<string>, 1: array<string, string>} Rewritten segments and parameters
    */
   public function rewrite(array $segments): array {
     $params = [];
